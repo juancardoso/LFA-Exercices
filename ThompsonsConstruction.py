@@ -25,6 +25,19 @@ class Stack(object):
     def top(self):
         if not self.empty():
             return self.__stack[-1]
+        
+class Graph:
+
+    def __init__(self, node = None):
+        if node is None:
+          self.nodes = []
+        else:
+          self.nodes = [node]
+
+    def __add__(self, other):
+        g = Graph('s')
+        g.nodes = self.nodes + other.nodes
+        return g
 
 
 prioridade = {
