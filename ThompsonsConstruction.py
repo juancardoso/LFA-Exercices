@@ -59,27 +59,14 @@ prioridade = {
 def main():
     posfix = posFix(TESTE_10)
     res = thompson(posfix)
-    print(res.edges)
-    #import json
-    #g = {
-    #    "initial_state":"s0",
-    #    "alphabet":list(set(res.nodes))
-    #}
-    #g['states'] = ['s%d' % i for i in range(len(res.nodes))]
-    #g['accepting_states'] = ['s0', g['states'][-1]]
-    #g['transitions'] = [["s"+str(k), res.nodes[k], "s"+str(v[0])] for k, v in enumerate(res.edges) if len(v) > 0]
-    #print(g)
-    #with open('graph.json', 'w') as json_file:  
-    #    json.dump(g, json_file)
-    #from PySimpleAutomata import DFA, automata_IO
-#
-    #dfa_example = automata_IO.dfa_json_importer('graph.json')
-
-    #new_dfa = DFA.dfa_completion(dfa_example)
-    #new_dfa=DFA.dfa_minimization(dfa_example)
-
-    #automata_IO.dfa_to_dot(new_dfa, 'output', '.')
-    #thompson(entrada,)
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    g = nx.Graph()
+    edges = [(e[0], e[1], {'weight':e[2]}) for e in res.edges]
+    print(edges)
+    g.add_nodes_from(edges)
+    nx.draw_shell(g, with_labels=True, font_weight='bold')
+    plt.show()
 
 def S():
     global STATE
