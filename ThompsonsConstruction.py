@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import networkx as nx    
+
 TESTE_1 = "A"
 TESTE_2 = "A.B"
 TESTE_3 = "A|B"
@@ -57,16 +60,33 @@ prioridade = {
 
 
 def main():
-    posfix = posFix(TESTE_10)
+    print("***O numero do nó inicial e final será mostrado no console***\n")
+    print("Digite o regex Ex: A.B*.(A+B)")
+    V = input().upper()
+
+    posfix = posFix(V)
     res = thompson(posfix)
-    import matplotlib.pyplot as plt
-    import networkx as nx
-    g = nx.Graph()
-    edges = [(e[0], e[1], {'weight':e[2]}) for e in res.edges]
-    print(edges)
-    g.add_nodes_from(edges)
-    nx.draw_shell(g, with_labels=True, font_weight='bold')
-    plt.show()
+    g = nx.DiGraph()
+    edges = [(e[0], e[1]) for e in res.edges]
+    
+    g.add_edges_from(edges)
+    pos = nx.layout.spring_layout(g)
+    labels = {}
+    
+    for e in res.edges:
+        labels[(e[0], e[1])] = e[2]
+    plt.figure(figsize=(20, 20))
+    nx.draw(g, pos, with_labels=True, edge_color='black', width=2,
+            linewidths=1, node_size=250, node_color='green', alpha=0.9,)
+
+    inicio = res.edges[0][0]
+    fim = res.edges[-1][1]
+
+    print("Nó Inicial: "+ str(inicio)+"\n","Nó Final: "+str(fim)+"\n")
+    nx.draw_networkx_edge_labels(g, pos, edge_labels=labels)
+
+    plt.savefig("./teste.png")  # save as png
+    plt.show()  # display
 
 def S():
     global STATE
@@ -75,6 +95,11 @@ def S():
 
 def thompson(exp):
     s = Stack()
+
+    if len(exp) == 1:
+        g = Graph()
+        g.edges.append((S(), S(), 'A'))
+        return g
 
     for e in exp:
         if e.isalpha():
