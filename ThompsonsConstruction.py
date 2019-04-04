@@ -93,6 +93,8 @@ def main():
     plt.savefig("./teste.png")  # save as png
     plt.show()  # display
 
+    afn_afd(res.edges, inicio, fim)
+
 def S():
     global STATE
     STATE += 1
@@ -209,6 +211,28 @@ def thompson(exp):
 
     
     return s.pop()
+
+def calcClosure(edges):
+    closure = []
+    
+    for i in range(len(edges)):
+        nfrom = edges[i][0]
+        nto = edges[i][1]
+        weight = edges[i][2]
+        if i == 0:
+            closure.append(nfrom)
+            if weight == E:
+                closure.append(nto)
+        else:
+            if weight == E and nfrom in closure:
+                if not nto in closure:
+                    closure.append(nto)
+    return closure
+
+def afn_afd(edges, initialNode, finalNode):
+    closure = calcClosure(edges)
+    print("Closure",closure)
+    pass
 
 def posFix(exp):
     print("PF - Input: ",exp)
