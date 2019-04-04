@@ -1,3 +1,7 @@
+####150949 JUAN CARDOSO
+####150329 Emanuel Huber
+
+
 import matplotlib.pyplot as plt
 import networkx as nx    
 
@@ -79,6 +83,7 @@ def main():
     nx.draw(g, pos, with_labels=True, edge_color='black', width=2,
             linewidths=1, node_size=250, node_color='green', alpha=0.9,)
 
+    print(res.edges)
     inicio = res.edges[0][0]
     fim = res.edges[-1][1]
 
@@ -171,7 +176,7 @@ def thompson(exp):
                 g.edges.append((S(), S(), '&'))
                 g.edges.append((g.edges[-1][1], S(), op))
                 g.edges.append((g.edges[-1][1], g.edges[-1][0], '&'))
-                g.edges.append((g.edges[-2][1], S(), '&'))
+                g.edges.append((g.edges[-1][0], S(), '&'))
                 g.edges.append((g.edges[0][0], g.edges[-1][1], '&'))
 
             s.push(g)
@@ -199,7 +204,7 @@ def thompson(exp):
                 g.edges.append((g.edges[-1][1], S(), op))
                 g.edges.append((g.edges[-1][1], g.edges[-1][0], '&'))
                 g.edges.append((g.edges[-2][1], S(), '&'))
-                g.edges.append((g.edges[0][0], g.edges[-1][1], '&'))
+                g.edges.append((g.edges[2][0], g.edges[-1][1], '&'))
             s.push(g)
 
     
