@@ -90,8 +90,8 @@ def main():
     print("Nó Inicial: "+ str(inicio)+"\n","Nó Final: "+str(fim)+"\n")
     nx.draw_networkx_edge_labels(g, pos, edge_labels=labels)
 
-    plt.savefig("./teste.png")  # save as png
-    plt.show()  # display
+    # plt.savefig("./teste.png")  # save as png
+    # plt.show()  # display
 
     afn_afd(res.edges, inicio, fim)
 
@@ -214,19 +214,23 @@ def thompson(exp):
 
 def calcClosure(edges):
     closure = []
-    
-    for i in range(len(edges)):
-        nfrom = edges[i][0]
-        nto = edges[i][1]
-        weight = edges[i][2]
-        if i == 0:
-            closure.append(nfrom)
-            if weight == E:
-                closure.append(nto)
-        else:
-            if weight == E and nfrom in closure:
-                if not nto in closure:
+    interation = True;
+
+    while interation == True:
+        interation = False
+        for i in range(len(edges)):
+            nfrom = edges[i][0]
+            nto = edges[i][1]
+            weight = edges[i][2]
+            if len(closure) == 0 and i == 0:
+                closure.append(nfrom)
+                if weight == E:
                     closure.append(nto)
+            else:
+                if weight == E and nfrom in closure:
+                    if not nto in closure:
+                        interation = True
+                        closure.append(nto)
     return closure
 
 def afn_afd(edges, initialNode, finalNode):
