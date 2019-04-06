@@ -4,6 +4,7 @@
 
 import matplotlib.pyplot as plt
 import networkx as nx    
+import re
 
 TESTE_1 = "A"
 TESTE_2 = "A.B"
@@ -93,13 +94,14 @@ def main():
     # plt.savefig("./teste.png")  # save as png
     # plt.show()  # display
 
-    afn_afd(res.edges, inicio, fim)
+    afn_afd(res.edges, inicio, fim,V)
 
 def S():
     global STATE
     STATE += 1
     return STATE
 
+#Calcula AFN
 def thompson(exp):
     s = Stack()
 
@@ -212,6 +214,7 @@ def thompson(exp):
     
     return s.pop()
 
+#Calcula no closure
 def calcClosure(edges):
     closure = []
     interation = True;
@@ -233,11 +236,24 @@ def calcClosure(edges):
                         closure.append(nto)
     return closure
 
-def afn_afd(edges, initialNode, finalNode):
+
+#Retorna o alfabeto do regex passado inicialmente
+def getAlfabeto(alfabeto):
+    return list(dict.fromkeys(re.findall("[A-Z]", alfabeto)))
+
+#Retorna todos os estados do qual o no e o peso passado conseguem alcancar
+# def getAllStatesNode(idNumber,weight)
+#     pass
+
+#Transforma o AFN em AFD
+def afn_afd(edges, initialNode, finalNode, input):
     closure = calcClosure(edges)
+    alfabeto = getAlfabeto(input)
     print("Closure",closure)
+    print("alfabeto",alfabeto)
     pass
 
+#Calcula a expressao para posfixa
 def posFix(exp):
     print("PF - Input: ",exp)
     stack = Stack()
