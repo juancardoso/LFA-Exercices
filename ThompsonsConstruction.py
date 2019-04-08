@@ -5,6 +5,9 @@
 import matplotlib.pyplot as plt
 import networkx as nx    
 import re
+import numpy as np
+
+DEBUG = False
 
 TESTE_1 = "A"
 TESTE_2 = "A.B"
@@ -84,7 +87,7 @@ def main():
     nx.draw(g, pos, with_labels=True, edge_color='black', width=2,
             linewidths=1, node_size=250, node_color='green', alpha=0.9,)
 
-    print(res.edges)
+    # print(res.edges)
     inicio = res.edges[0][0]
     fim = res.edges[-1][1]
 
@@ -94,7 +97,15 @@ def main():
     # plt.savefig("./teste.png")  # save as png
     # plt.show()  # display
 
+    ##MOCK
+    V = "AB"
+    inicio = 1
+    fim = 6
+    res.edges = [(1,2,"A"),(1,2,E),(2,3,E),(3,4,"B"),(3,4,E),(4,5,E),(5,6,"B"),(4,1,E)]
+    ##MOCK
+    print("Edges: ",res.edges,"\n")
     afn_afd(res.edges, inicio, fim,V)
+    
 
 def S():
     global STATE
@@ -242,20 +253,141 @@ def getAlfabeto(alfabeto):
     return list(dict.fromkeys(re.findall("[A-Z]", alfabeto)))
 
 #Retorna todos os estados do qual o no e o peso passado conseguem alcancar
-# def getAllStatesNode(idNumber,weight)
-#     pass
+def getAllStatesNode(idNumber,weight,edges):
+    dfaedge = getStatsFromNode(idNumber,weight,edges)
+    lenDfaedge = 0
+    
+    while len(dfaedge) != lenDfaedge:
+        lenDfaedge = len(dfaedge)
+        for e in dfaedge:
+            addNodes = getStatsFromNode(e,weight,edges)
+            if len(addNodes) > 0:
+                for i in addNodes:
+                    if not i in dfaedge:
+                        dfaedge.append(i)
+    
+    return dfaedge
+
+#Retorna o estados do qual um no pode chegar pelo peso
+def getStatsFromNode(idNumber,weight,edges,vazio = True):
+    #Pega todos os edges que o no do idNumber chega
+    dfaedge = []
+    for e in edges:
+        if e[0] == idNumber:
+            if e[2] == weight or (vazio and e[2] == E):
+                if not e[1] in dfaedge:
+                    dfaedge.append(e[1])
+    
+    return dfaedge
+
+def addcreateTableAlfabet(ed,alfabeto):
+    for x in alfabeto:
+       ed[x] = {}
+
+def addSeNaoRepetir(arr,addNodes):
+    for node in addNodes:
+        if not node in arr:
+            arr.append(node) 
+
+def addSeNaoRepetirClosure(closures,addNodes,closuresNotAlreadyPass):
+    nExist = True
+    for clos in closures:
+        if len(closures[clos]['C']) == len(addNodes):
+            npA = np.asarray(closures[clos]['C'])
+            npB = np.asarray(addNodes)
+            
+            if np.array_equal(npA,npB): 
+                nExist = False
+
+    if nExist:
+        name = "S"+str(len(closures))
+        closures[name] = {"C":addNodes}
+        closuresNotAlreadyPass.append(name)
+
+def addTabelaEstados(estados,alfabeto,nomeClosure):
+    tupla = {}
+    for x in alfabeto:
+         tupla[x] = ""
+    estados[nomeClosure] = tupla
+
+
+def findClosure(closures,conjunto):
+    npB = np.asarray(conjunto)
+    for cl in closures:
+        npA = np.asarray(closures[cl]["C"])
+        if np.array_equal(npA,npB):
+            return cl
 
 #Transforma o AFN em AFD
 def afn_afd(edges, initialNode, finalNode, input):
-    closure = calcClosure(edges)
     alfabeto = getAlfabeto(input)
-    print("Closure",closure)
-    print("alfabeto",alfabeto)
+    closuresNotAlreadyPass = ["S0"]
+    closures = {}
+    conjunto = {}
+    estados = {}
+        
+    while len(closuresNotAlreadyPass) > 0:
+        closureName = closuresNotAlreadyPass[0]
+        del closuresNotAlreadyPass[0]
+         
+        if(closureName == "S0"):
+            closures[closureName] = {"C":[initialNode]}
+            #NO CLOSURE INICIAL NAO POSSO TER UM NO LEVANDO PRA ESSE ESTADO (ESTADO INICIAL)
+            closures[closureName]["U"] = [f for f in getAllStatesNode(edges[0][0],E,edges) if f != initialNode]
+        
+        #BUSCA OS CONJUNTOS COM AS LETRAS DO ALFABETO
+        for letra in alfabeto:
+            for nodeValue in closures[closureName]["C"]:
+                if conjunto.get(letra) == None:
+                    conjunto[letra] = getStatsFromNode(nodeValue,letra,edges,False) 
+                else:
+                    conjunto[letra].append(getStatsFromNode(nodeValue,letra,edges,False))
+
+        # estados = {"S0":{"A":"SX","B":"SX"}}
+        addTabelaEstados(estados,alfabeto,closureName)
+        
+        # print("Uniao: ",closures[closureName]['U'])
+                
+        #ADICIONA A UNIAO AO CONJUNTO
+        if closureName == "S0":
+            for letra in alfabeto:
+                for node in closures[closureName]['U']:
+                    aux = getStatsFromNode(node,letra,edges,False) 
+                    if len(aux) > 0:
+                        addSeNaoRepetir(conjunto[letra],aux)
+
+        # if closureName == "S1"
+        #     DEBUG = True        
+        #ADICIONA O CONJUNTO AO CLOSURE SE O MESMO JA NAO ESTIVER LA
+        for e in conjunto:
+            addSeNaoRepetirClosure(closures,conjunto[e],closuresNotAlreadyPass)
+    
+
+        #LINKA A TRANSICAO DE ESTADOS COM O CLOSURE
+        for conj in conjunto:
+            closureFound = findClosure(closures,conjunto[conj]) 
+            estados["S0"][conj] = closureFound
+
+        #ADICIONA A UNIAO DOS CLOSURES FALTANTES
+        for cl in closures:
+            if closures[cl].get("U") == None:
+                for union in closures[cl]["C"]:
+                    aux = getAllStatesNode(union,E,edges)
+                    if len(aux) > 0:
+                        if closures[cl].get("U") == None:
+                            closures[cl]["U"] = aux
+                        else:
+                            closures[cl]["U"].append(aux)
+
+        conjunto = {}
+
+    print("Estados: ", estados)
+    print("Closure",closures)
     pass
 
 #Calcula a expressao para posfixa
 def posFix(exp):
-    print("PF - Input: ",exp)
+    # print("PF - Input: ",exp)
     stack = Stack()
     posfix = ""
 
@@ -279,9 +411,13 @@ def posFix(exp):
     while stack.empty() != True:
         posfix+=stack.pop()
 
-    print("PF - Output: ",posfix)
+    # print("PF - Output: ",posfix)
     return posfix
 
 
 if __name__ == '__main__':
     main()
+
+
+#https://www.youtube.com/watch?v=Efbtw2SjqRg
+#FIZ COM BASE NESSE VIDEO
