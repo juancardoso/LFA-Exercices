@@ -7,8 +7,6 @@ import networkx as nx
 import re
 import numpy as np
 
-DEBUG = False
-
 TESTE_1 = "A"
 TESTE_2 = "A.B"
 TESTE_3 = "A|B"
@@ -24,7 +22,6 @@ STATE = 0
 
 #"A.B"
 #E-A-E-B-E
-
 class Stack(object):
     def __init__(self):
         self.__stack = []
@@ -280,22 +277,31 @@ def getStatsFromNode(idNumber,weight,edges,vazio = True):
     
     return dfaedge
 
-def addcreateTableAlfabet(ed,alfabeto):
-    for x in alfabeto:
-       ed[x] = {}
+# def addcreateTableAlfabet(ed,alfabeto):
+#     for x in alfabeto:
+#        ed[x] = {}
 
+#SE NO NAO ESTIVER NO ARR PASSADO ELE IRA ADICIONAR
 def addSeNaoRepetir(arr,addNodes):
     for node in addNodes:
         if not node in arr:
             arr.append(node) 
 
-def addSeNaoRepetirClosure(closures,addNodes,closuresNotAlreadyPass):
+##ADICIONA A LISTA DE CLOSURES UM NOVO CLOSURE, 
+# VERIFICANDO SE O MESMO JA NAO EXISTE PARA NAO ADICIONAR 2X
+def addSeNaoRepetirClosure(closures,addNodes,closuresNotAlreadyPass, DEBUG = False):
     nExist = True
     for clos in closures:
         if len(closures[clos]['C']) == len(addNodes):
             npA = np.asarray(closures[clos]['C'])
             npB = np.asarray(addNodes)
+
+            if len(npA) > 1:
+                npA.sort()
             
+            if len(npB) > 1:
+                npB.sort()
+
             if np.array_equal(npA,npB): 
                 nExist = False
 
@@ -304,17 +310,24 @@ def addSeNaoRepetirClosure(closures,addNodes,closuresNotAlreadyPass):
         closures[name] = {"C":addNodes}
         closuresNotAlreadyPass.append(name)
 
+#ADICIONA AS TUPLAS PARA TODAS AS LETRAS DO ALFABETO PARA O DETERMINADO CLOSURE PASSADO
 def addTabelaEstados(estados,alfabeto,nomeClosure):
     tupla = {}
     for x in alfabeto:
          tupla[x] = ""
     estados[nomeClosure] = tupla
 
-
+#ACHA QUAL E A TAG DO CLOSURE DO CONJUNTO EX: S3
 def findClosure(closures,conjunto):
     npB = np.asarray(conjunto)
+
+    if len(npB) > 0:
+        npB.sort()
+
     for cl in closures:
         npA = np.asarray(closures[cl]["C"])
+        if len(npA) > 0:
+            npA.sort()
         if np.array_equal(npA,npB):
             return cl
 
@@ -338,7 +351,7 @@ def afn_afd(edges, initialNode, finalNode, input):
         #BUSCA OS CONJUNTOS COM AS LETRAS DO ALFABETO
         for letra in alfabeto:
             for nodeValue in closures[closureName]["C"]:
-                if conjunto.get(letra) == None:
+                if conjunto.get(letra) == None or len(conjunto[letra]) == 0:
                     conjunto[letra] = getStatsFromNode(nodeValue,letra,edges,False) 
                 else:
                     conjunto[letra].append(getStatsFromNode(nodeValue,letra,edges,False))
@@ -349,24 +362,22 @@ def afn_afd(edges, initialNode, finalNode, input):
         # print("Uniao: ",closures[closureName]['U'])
                 
         #ADICIONA A UNIAO AO CONJUNTO
-        if closureName == "S0":
-            for letra in alfabeto:
-                for node in closures[closureName]['U']:
-                    aux = getStatsFromNode(node,letra,edges,False) 
-                    if len(aux) > 0:
-                        addSeNaoRepetir(conjunto[letra],aux)
+        # if closureName == "S0":
+        for letra in alfabeto:
+            for node in closures[closureName]['U']:
+                aux = getStatsFromNode(node,letra,edges,False) 
+                if len(aux) > 0:
+                    addSeNaoRepetir(conjunto[letra],aux)
 
-        # if closureName == "S1"
-        #     DEBUG = True        
+                  
         #ADICIONA O CONJUNTO AO CLOSURE SE O MESMO JA NAO ESTIVER LA
         for e in conjunto:
             addSeNaoRepetirClosure(closures,conjunto[e],closuresNotAlreadyPass)
-    
 
         #LINKA A TRANSICAO DE ESTADOS COM O CLOSURE
         for conj in conjunto:
             closureFound = findClosure(closures,conjunto[conj]) 
-            estados["S0"][conj] = closureFound
+            estados[closureName][conj] = closureFound
 
         #ADICIONA A UNIAO DOS CLOSURES FALTANTES
         for cl in closures:
@@ -383,7 +394,6 @@ def afn_afd(edges, initialNode, finalNode, input):
 
     print("Estados: ", estados)
     print("Closure",closures)
-    pass
 
 #Calcula a expressao para posfixa
 def posFix(exp):
